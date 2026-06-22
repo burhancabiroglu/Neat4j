@@ -104,19 +104,80 @@ Matrix prediction = bestNetwork.forward(inputData);
 prediction.log();
 ```
 
-## Build and Test
+## Requirements
 
-Use Java 21 or a compatible modern JDK.
+- Java 21;
+- Git;
+- a terminal or an IDE with Gradle support, such as IntelliJ IDEA.
+
+Check your Java version before building:
+
+```bash
+java -version
+```
+
+If several JDKs are installed, point Gradle to Java 21:
+
+```bash
+export JAVA_HOME=/path/to/jdk-21
+```
+
+On macOS with Homebrew OpenJDK 21, that may look like:
+
+```bash
+export JAVA_HOME=/opt/homebrew/Cellar/openjdk@21/21.0.11/libexec/openjdk.jdk/Contents/Home
+```
+
+## Quick Start
+
+Clone the repository, enter the project directory, and run the tests:
+
+```bash
+git clone https://github.com/burhancabiroglu/Neat4j.git
+cd Neat4j
+./gradlew test
+```
+
+The project is a library, so it does not start a graphical application by itself. The fastest way to verify the code is the test suite. The sandbox project shows the library in a game-like environment.
+
+## Development Commands
+
+Run the tests:
 
 ```bash
 ./gradlew test
 ```
 
-To publish locally:
+Build the library:
+
+```bash
+./gradlew build
+```
+
+Publish to your local Maven repository:
 
 ```bash
 ./gradlew publishToMavenLocal
 ```
+
+Publish to GitHub Packages:
+
+```bash
+./gradlew publish
+```
+
+Publishing to GitHub Packages requires credentials. For local publishing, add a GitHub personal access token, classic, to `~/.gradle/gradle.properties`:
+
+```properties
+gpr.user=your-github-username
+gpr.token=your-github-token
+```
+
+The token needs `write:packages` for publishing. It needs `read:packages` when the package is only consumed as a dependency.
+
+For GitHub Actions, the workflow uses `GITHUB_TOKEN` and runs automatically on pushes to `main`.
+
+## Using Neat4j as a Dependency
 
 Current package coordinates:
 
@@ -137,6 +198,40 @@ repositories {
     }
 }
 ```
+
+For Gradle Groovy DSL:
+
+```groovy
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/burhancabiroglu/Neat4j")
+        credentials {
+            username = findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
+dependencies {
+    implementation "com.cabir:neat4j:1.1.0"
+}
+```
+
+## IntelliJ IDEA
+
+Open the repository root as a Gradle project:
+
+```text
+File > Open > Neat4j
+```
+
+After Gradle sync finishes, run:
+
+```text
+Tasks > verification > test
+```
+
+You can also run individual JUnit tests from `src/test/java`.
 
 ## Design Notes
 
