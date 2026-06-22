@@ -346,7 +346,7 @@ public final class Matrix {
     public static double uniformRandom(int low, int height){
         Random random = new Random();
 
-        return  random.nextInt(height+1);
+        return random.nextInt(height - low + 1) + low;
     }
 
     public void getMeYourselfBaby(double[][] m){

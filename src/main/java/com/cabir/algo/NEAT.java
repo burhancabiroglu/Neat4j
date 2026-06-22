@@ -34,7 +34,7 @@ public final class NEAT {
             for (int j = 0; j < layer.weight().shape(0); j++) {
                 for (int k = 0; k < layer.weight().shape(1); k++) {
                     if(Math.random()>mutationRate){
-                        if(Math.random()<(nn1.fitness/(nn1.fitness+ nn2.fitness))){
+                        if(Math.random()<parentChance(nn1, nn2)){
                             child.getLayer(i).weight().data[j][k] = nn1.getLayer(i).weight().data[j][k];
                         }
                         else{
@@ -51,7 +51,7 @@ public final class NEAT {
             for (int j = 0; j < layer.bias().shape(0); j++) {
                 for (int k = 0; k < layer.bias().shape(1); k++) {
                     if(Math.random()>mutationRate){
-                        if(Math.random()<(nn1.fitness/(nn1.fitness+ nn2.fitness))){
+                        if(Math.random()<parentChance(nn1, nn2)){
                             child.getLayer(i).bias().data[j][k] = nn1.getLayer(i).bias().data[j][k];
                         }
                         else{
@@ -63,6 +63,12 @@ public final class NEAT {
         }
 
         return child;
+    }
+
+    private double parentChance(NeatNetwork nn1, NeatNetwork nn2) {
+        double totalFitness = nn1.fitness + nn2.fitness;
+        if (totalFitness <= 0) return 0.5;
+        return nn1.fitness / totalFitness;
     }
 
     public void sortPopulation(final boolean reversed){
@@ -83,42 +89,42 @@ public final class NEAT {
     public void createNewGenerations(){
         ArrayList<NeatNetwork> nextGen = new ArrayList<>();
         sortPopulation(true);
-        for (int i = 0; i < populationCount; i++) {
-            if(Math.random()<((double) (populationCount-i)/(double) populationCount)) nextGen.add(population.get(i).clone());
-        }
-        ArrayList<Double> fitnessSum = new ArrayList<>();
-        fitnessSum.add(0.0);
-        Optional<NeatNetwork> minFitNeuron = nextGen.stream().min(new Comparator<NeatNetwork>() {
-            @Override
-            public int compare(NeatNetwork o1, NeatNetwork o2) {
-                return Double.compare(o1.fitness,o2.fitness);
-            }
+        Optional<NeatNetwork> minFitNeuron = population.stream().min(Comparator.comparingDouble(o -> o.fitness));
+        double minFit = minFitNeuron.map(neatNetwork -> neatNetwork.fitness).orElse(0.0);
 
-        });
-        double minFit = minFitNeuron.get().fitness;
-        for (int i = 0; i < nextGen.size(); i++) {
-            fitnessSum.add((fitnessSum.get(i)+Math.pow((nextGen.get(i).fitness-minFit),4)));
-        }
+        if (!population.isEmpty()) nextGen.add(population.get(0).clone());
 
         while (nextGen.size()<populationCount){
-            double r1 = Matrix.uniformRandom(0,fitnessSum.size()-1);
-            double r2 = Matrix.uniformRandom(0,fitnessSum.size()-1);
-            fitnessSum.sort(new Comparator<Double>() {
-                @Override
-                public int compare(Double o1, Double o2) {
-                    return Double.compare(o1,o2);
-                }
-            });
-            int i1 = fitnessSum.indexOf(r1);
-            int i2 = fitnessSum.indexOf(r2);
-
-            if((0<= i1 && i1<fitnessSum.size())&&(0<= i2 && i2<fitnessSum.size())){
-                nextGen.add(crossingOver(nextGen.get((int)i1),nextGen.get((int)i2)));
-            }
+            NeatNetwork parent1 = selectParent(minFit);
+            NeatNetwork parent2 = selectParent(minFit);
+            nextGen.add(crossingOver(parent1,parent2));
         }
         population.clear();
         population.addAll(nextGen);
 
+    }
+
+    private NeatNetwork selectParent(double minFit) {
+        double totalWeight = 0.0;
+        for (NeatNetwork network : population) {
+            totalWeight += selectionWeight(network, minFit);
+        }
+
+        if (totalWeight <= 0) {
+            return population.get((int) Matrix.uniformRandom(0, population.size() - 1));
+        }
+
+        double pick = Math.random() * totalWeight;
+        double cursor = 0.0;
+        for (NeatNetwork network : population) {
+            cursor += selectionWeight(network, minFit);
+            if (pick <= cursor) return network;
+        }
+        return population.get(population.size() - 1);
+    }
+
+    private double selectionWeight(NeatNetwork network, double minFit) {
+        return Math.pow(network.fitness - minFit + 1.0, 4);
     }
 
 

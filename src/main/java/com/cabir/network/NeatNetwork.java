@@ -17,7 +17,9 @@ public class NeatNetwork {
     public NeatNetwork(ArrayList<Layer> layers,double fitness,NetworkSkeleton skeleton){
         this.fitness = fitness;
         this.skeleton = skeleton;
-        this.layers = new ArrayList<>(layers);
+        this.layers = new ArrayList<>();
+        for (LayerSkeleton ls: skeleton.get()) this.layers.add(ls.generate());
+        copyWeights(layers, this.layers);
     }
 
     public NeatNetwork(NetworkSkeleton skeleton){
@@ -79,5 +81,25 @@ public class NeatNetwork {
     @SuppressWarnings("UnusedReturnValue")
     public NeatNetwork clone(){
         return new NeatNetwork(this.layers,this.fitness,this.skeleton.clone());
+    }
+
+    private void copyWeights(ArrayList<Layer> sourceLayers, ArrayList<Layer> targetLayers) {
+        for (int i = 0; i < sourceLayers.size(); i++) {
+            Matrix sourceWeight = sourceLayers.get(i).weight();
+            Matrix targetWeight = targetLayers.get(i).weight();
+            if (sourceWeight != null && targetWeight != null) copyMatrix(sourceWeight, targetWeight);
+
+            Matrix sourceBias = sourceLayers.get(i).bias();
+            Matrix targetBias = targetLayers.get(i).bias();
+            if (sourceBias != null && targetBias != null) copyMatrix(sourceBias, targetBias);
+        }
+    }
+
+    private void copyMatrix(Matrix source, Matrix target) {
+        for (int row = 0; row < source.shape(0); row++) {
+            for (int column = 0; column < source.shape(1); column++) {
+                target.data[row][column] = source.data[row][column];
+            }
+        }
     }
 }

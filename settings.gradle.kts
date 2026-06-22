@@ -1,2 +1,1 @@
-rootProject.name = "Neat4j"
-
+rootProject.name = "neat4j"
