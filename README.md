@@ -121,7 +121,21 @@ To publish locally:
 Current package coordinates:
 
 ```kotlin
-implementation("com.cabir:neat4j:1.1.0-SNAPSHOT")
+implementation("com.cabir:neat4j:1.1.0")
+```
+
+When consuming the package from GitHub Packages, add the package repository and provide credentials through Gradle properties or environment variables:
+
+```kotlin
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/burhancabiroglu/Neat4j")
+        credentials {
+            username = findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("gpr.token") as String? ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
 ```
 
 ## Design Notes
