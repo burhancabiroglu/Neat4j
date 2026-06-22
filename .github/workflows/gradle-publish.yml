@@ -2,7 +2,7 @@
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
 # documentation.
-# This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
+# This workflow builds the project on main and publishes the package only for releases or manual runs.
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
 
 name: Gradle Package
@@ -12,6 +12,7 @@ on:
     types: [created]
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -39,9 +40,8 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew build
-    # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
-    # the publishing section of your build.gradle
     - name: Publish to GitHub Packages
+      if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
       run: ./gradlew publish
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
