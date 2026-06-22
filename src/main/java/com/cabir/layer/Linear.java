@@ -26,9 +26,7 @@ public class Linear extends Layer {
     public Matrix forward(Matrix m) {
         input = m.clone();
         Matrix weightCalc = Matrix.dot(m, weight);
-        assert weightCalc != null;
         output = Matrix.addBias(weightCalc,bias);
-        assert output != null;
         return output;
     }
 

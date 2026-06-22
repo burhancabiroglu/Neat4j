@@ -28,6 +28,12 @@ In this project, it is aimed to realize a high-performance neat algorithm that c
 </br>
 </br>
 
+## Implementation Note
+
+The current implementation evolves weights and biases for a user-defined fixed `NetworkSkeleton`. It does not yet implement structural NEAT features such as innovation numbers, speciation, or node/connection topology mutation.
+</br>
+</br>
+
 ## Developer Guide
 ### <ul>
 ### <li> Build Own Neat Network 

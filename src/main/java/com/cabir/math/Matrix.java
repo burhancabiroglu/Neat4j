@@ -32,7 +32,7 @@ public final class Matrix {
     }
 
     public Matrix(double[][] m){
-        this.data = m;
+        this.data = copyData(m);
         this.row = m.length;
         if (m.length > 0) {
             this.column = m[0].length;
@@ -48,7 +48,7 @@ public final class Matrix {
     }
 
     public Matrix(Matrix m){
-        this.data = m.data;
+        this.data = copyData(m.data);
         this.row = m.row;
         this.column = m.column;
     }
@@ -157,8 +157,7 @@ public final class Matrix {
 
     public Matrix add(Matrix m) {
         if(column!=m.column || row!=m.row) {
-            System.out.println("Shape Mismatch");
-            return null;
+            throw new IllegalArgumentException("Shape mismatch " + shape() + " and " + m.shape());
         }
 
         for(int i=0;i<row;i++) {
@@ -172,8 +171,7 @@ public final class Matrix {
     public static Matrix add(Matrix m1,Matrix m2) {
         Matrix mnt = new Matrix(m1.row,m1.column);
         if(m1.column!=m2.column || m1.row!=m2.row) {
-            System.out.println("Shape Mismatch "+m1.shape()+" and "+m2.shape());
-            return null;
+            throw new IllegalArgumentException("Shape mismatch " + m1.shape() + " and " + m2.shape());
         }
 
         for(int i=0;i<m1.row;i++) {
@@ -187,8 +185,7 @@ public final class Matrix {
     public static Matrix sub(Matrix m1,Matrix m2) {
         Matrix mnt = new Matrix(m1.row,m1.column);
         if(m1.column!=m2.column || m1.row!=m2.row) {
-            System.out.println("Shape Mismatch "+m1.shape()+" and "+m2.shape());
-            return null;
+            throw new IllegalArgumentException("Shape mismatch " + m1.shape() + " and " + m2.shape());
         }
 
         for(int i=0;i<m1.row;i++) {
@@ -289,8 +286,7 @@ public final class Matrix {
     public static Matrix dot(Matrix m1,Matrix m2){
 
         if(m1.column != m2.row){
-            System.out.println("Invalid Shape. ("+ m1.row+","+m1.column+")  and  ("+ m2.row+","+m2.column+")");
-            return null;
+            throw new IllegalArgumentException("Invalid shape " + m1.shape() + " and " + m2.shape());
         }
         Matrix m = new Matrix(m1.row,m2.column);
 
@@ -407,8 +403,12 @@ public final class Matrix {
     }
 
     public static Matrix addBias(Matrix input,Matrix bias){
-        if(input.shape(1) != bias.shape(1)) return null;
-        if(bias.shape(0) != 1) return null;
+        if(input.shape(1) != bias.shape(1)) {
+            throw new IllegalArgumentException("Bias shape " + bias.shape() + " cannot be added to input " + input.shape());
+        }
+        if(bias.shape(0) != 1) {
+            throw new IllegalArgumentException("Bias must have exactly one row.");
+        }
         int addRow = input.shape(0) - bias.shape(0);
         Matrix clone = bias.clone();
         Matrix added = bias.clone();
@@ -416,5 +416,16 @@ public final class Matrix {
             clone.appendRow(added.data);
         }
         return Matrix.add(input,clone);
+    }
+
+    private static double[][] copyData(double[][] source) {
+        double[][] copy = new double[source.length][];
+        for (int i = 0; i < source.length; i++) {
+            copy[i] = new double[source[i].length];
+            for (int j = 0; j < source[i].length; j++) {
+                copy[i][j] = source[i][j];
+            }
+        }
+        return copy;
     }
 }

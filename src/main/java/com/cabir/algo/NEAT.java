@@ -18,6 +18,10 @@ public final class NEAT {
     private final int generationLimit;
 
     public NEAT(NetworkSkeleton skeleton, int populationCount, double mutationRate, int generationLimit){
+        if (populationCount <= 0) throw new IllegalArgumentException("Population count must be positive.");
+        if (mutationRate < 0 || mutationRate > 1) throw new IllegalArgumentException("Mutation rate must be between 0 and 1.");
+        if (generationLimit <= 0) throw new IllegalArgumentException("Generation limit must be positive.");
+
         this.skeleton = skeleton;
         this.mutationRate = mutationRate;
         this.populationCount = populationCount;
@@ -33,14 +37,10 @@ public final class NEAT {
             if(!(layer instanceof Linear)) continue;
             for (int j = 0; j < layer.weight().shape(0); j++) {
                 for (int k = 0; k < layer.weight().shape(1); k++) {
-                    if(Math.random()>mutationRate){
-                        if(Math.random()<parentChance(nn1, nn2)){
-                            child.getLayer(i).weight().data[j][k] = nn1.getLayer(i).weight().data[j][k];
-                        }
-                        else{
-                            child.getLayer(i).weight().data[j][k] = nn2.getLayer(i).weight().data[j][k];
-                        }
-                    }
+                    double inheritedWeight = Math.random()<parentChance(nn1, nn2)
+                            ? nn1.getLayer(i).weight().data[j][k]
+                            : nn2.getLayer(i).weight().data[j][k];
+                    child.getLayer(i).weight().data[j][k] = mutateGene(inheritedWeight);
                 }
             }
         }
@@ -50,19 +50,20 @@ public final class NEAT {
             if(!(layer instanceof Linear)) continue;
             for (int j = 0; j < layer.bias().shape(0); j++) {
                 for (int k = 0; k < layer.bias().shape(1); k++) {
-                    if(Math.random()>mutationRate){
-                        if(Math.random()<parentChance(nn1, nn2)){
-                            child.getLayer(i).bias().data[j][k] = nn1.getLayer(i).bias().data[j][k];
-                        }
-                        else{
-                            child.getLayer(i).bias().data[j][k] = nn2.getLayer(i).bias().data[j][k];
-                        }
-                    }
+                    double inheritedBias = Math.random()<parentChance(nn1, nn2)
+                            ? nn1.getLayer(i).bias().data[j][k]
+                            : nn2.getLayer(i).bias().data[j][k];
+                    child.getLayer(i).bias().data[j][k] = mutateGene(inheritedBias);
                 }
             }
         }
 
         return child;
+    }
+
+    private double mutateGene(double value) {
+        if (Math.random() >= mutationRate) return value;
+        return value + ((2 * Math.random()) - 1);
     }
 
     private double parentChance(NeatNetwork nn1, NeatNetwork nn2) {
@@ -130,10 +131,14 @@ public final class NEAT {
 
     public void fit(Matrix xVals, Matrix yTrue){
         for (int i = 0; i < generationLimit; i++) {
-            for (NeatNetwork neatNetwork : population) {
-                neatNetwork.forward(xVals, yTrue);
-            }
-            createNewGenerations();
+            evaluatePopulation(xVals, yTrue);
+            if (i < generationLimit - 1) createNewGenerations();
+        }
+    }
+
+    private void evaluatePopulation(Matrix xVals, Matrix yTrue) {
+        for (NeatNetwork neatNetwork : population) {
+            neatNetwork.forward(xVals, yTrue);
         }
     }
 
